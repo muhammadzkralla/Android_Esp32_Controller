@@ -7,6 +7,16 @@
     tools:context=".MainActivity">
 
     <EditText
+        android:id="@+id/edt_ip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="Write the ip address..."
+        android:layout_marginBottom="10dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/edt_msg"/>
+
+    <EditText
         android:id="@+id/edt_msg"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -20,7 +30,7 @@
         android:id="@+id/send_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Send Mesa To Bassem"
+        android:text="Send Mesa To Basem"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"

@@ -30,24 +30,27 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.connectBtn.setOnClickListener {
-            if (isNetworkAvailable()) {
-                lifecycleScope.launch (Dispatchers.IO) {
+            if (isNetworkAvailable() && binding.edtIp.text.isNotEmpty()) {
+                lifecycleScope.launch(Dispatchers.IO) {
                     try {
-                        socket = Socket("192.168.4.1", 80)
-                        withContext (Dispatchers.Main) {
+                        val ip = binding.edtIp.text.toString()
+                        socket = Socket(ip, 80)
+                        val outputStream = DataOutputStream(socket!!.getOutputStream())
+                        outputStream.writeUTF("Hello from Android!")
+                        withContext(Dispatchers.Main) {
                             Toast.makeText(
                                 this@MainActivity,
-                                "Message sent successfully",
+                                "Connected successfully",
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
                     } catch (e: IOException) {
                         e.printStackTrace()
                         Log.e("ConnectionErr", "onCreate: $e")
-                        withContext (Dispatchers.IO) {
+                        withContext(Dispatchers.IO) {
                             Toast.makeText(
                                 this@MainActivity,
-                                "Error sending message $e",
+                                "Error connecting : $e",
                                 Toast.LENGTH_SHORT
                             )
                                 .show()
@@ -60,20 +63,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.disconnectBtn.setOnClickListener {
-            if (socket != null) {
-                socket!!.close()
-            }
+            socket?.close()
         }
 
         binding.sendBtn.setOnClickListener {
 
-            if (isNetworkAvailable() && socket != null) {
-                lifecycleScope.launch (Dispatchers.IO) {
+            if (isNetworkAvailable() && socket != null && binding.edtMsg.text.isNotEmpty()) {
+                lifecycleScope.launch(Dispatchers.IO) {
                     try {
                         val outputStream = DataOutputStream(socket!!.getOutputStream())
                         val message = binding.edtMsg.text.toString()
                         outputStream.writeUTF(message)
-                        withContext (Dispatchers.Main) {
+                        withContext(Dispatchers.Main) {
                             Toast.makeText(
                                 this@MainActivity,
                                 "Message sent successfully",
@@ -100,18 +101,18 @@ class MainActivity : AppCompatActivity() {
 
         binding.receiveBtn.setOnClickListener {
             if (socket != null) {
-                lifecycleScope.launch (Dispatchers.IO) {
+                lifecycleScope.launch(Dispatchers.IO) {
                     try {
-                        val inputStream = BufferedReader(InputStreamReader(socket!!.getInputStream()))
+                        val inputStream =
+                            BufferedReader(InputStreamReader(socket!!.getInputStream()))
                         val receivedMessage = inputStream.readLine()
-
-                        withContext (Dispatchers.Main) {
+                        withContext(Dispatchers.Main) {
                             binding.responseTxt.text = receivedMessage
                         }
 
                     } catch (e: IOException) {
                         e.printStackTrace()
-                        withContext (Dispatchers.Main) {
+                        withContext(Dispatchers.Main) {
                             binding.responseTxt.text = "Error receiving message: $e"
                         }
                     }
@@ -129,9 +130,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        if (socket != null) {
-            socket!!.close()
-        }
+        socket?.close()
     }
 
 }
