@@ -8,7 +8,10 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.zkrallah.esp32connectiondemo.adapter.MessagesAdapter
 import com.zkrallah.esp32connectiondemo.databinding.ActivityMainBinding
+import com.zkrallah.esp32connectiondemo.model.Message
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -23,6 +26,11 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private var socket: Socket? = null
+    private val adapter = MessagesAdapter(mutableListOf())
+
+    companion object {
+        private var started = false
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,7 +42,8 @@ class MainActivity : AppCompatActivity() {
                 lifecycleScope.launch(Dispatchers.IO) {
                     try {
                         val ip = binding.edtIp.text.toString()
-                        socket = Socket(ip, 80)
+                        val port = binding.edtPort.text.toString().toInt()
+                        socket = Socket(ip, port)
                         val outputStream = DataOutputStream(socket!!.getOutputStream())
                         outputStream.writeUTF("Hello from Android!")
                         withContext(Dispatchers.Main) {
@@ -64,6 +73,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.disconnectBtn.setOnClickListener {
             socket?.close()
+            started = false
         }
 
         binding.sendBtn.setOnClickListener {
@@ -100,20 +110,35 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.receiveBtn.setOnClickListener {
-            if (socket != null) {
+            if (socket != null && !started) {
                 lifecycleScope.launch(Dispatchers.IO) {
                     try {
                         val inputStream =
                             BufferedReader(InputStreamReader(socket!!.getInputStream()))
-                        val receivedMessage = inputStream.readLine()
-                        withContext(Dispatchers.Main) {
-                            binding.responseTxt.text = receivedMessage
+                        while (socket!!.isConnected) {
+                            val receivedMessage = inputStream.readLine()
+                            withContext(Dispatchers.Main) {
+                                adapter.addMessage(Message(receivedMessage))
+                                binding.recyclerMessages.adapter = adapter
+                                binding.recyclerMessages.layoutManager =
+                                    LinearLayoutManager(
+                                        this@MainActivity,
+                                        LinearLayoutManager.VERTICAL,
+                                        true
+                                    )
+
+                                started = true
+                            }
                         }
 
                     } catch (e: IOException) {
                         e.printStackTrace()
                         withContext(Dispatchers.Main) {
-                            binding.responseTxt.text = "Error receiving message: $e"
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Error receiving message: $e",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     }
                 }
@@ -130,6 +155,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        started = false
         socket?.close()
     }
 

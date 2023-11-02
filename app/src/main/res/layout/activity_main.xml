@@ -6,76 +6,87 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_messages"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/edt_port"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/edt_port"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="port number..."
+        android:layout_margin="10dp"
+        app:layout_constraintStart_toEndOf="@+id/edt_ip"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
     <EditText
         android:id="@+id/edt_ip"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="Write the ip address..."
-        android:layout_marginBottom="10dp"
+        android:hint="ip address..."
+        android:layout_margin="10dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/edt_msg"/>
+        app:layout_constraintEnd_toStartOf="@+id/edt_port"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
     <EditText
         android:id="@+id/edt_msg"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:hint="Write a message to send..."
         android:layout_marginBottom="10dp"
-        app:layout_constraintStart_toStartOf="parent"
+        android:hint="Write a message to send..."
+        app:layout_constraintBottom_toTopOf="@+id/send_btn"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/send_btn"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/edt_port" />
+
 
     <Button
         android:id="@+id/send_btn"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Send Mesa To Basem"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:text="Send"
+        android:layout_margin="10dp"
+        app:layout_constraintEnd_toStartOf="@+id/receive_btn"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"/>
-
-    <TextView
-        android:id="@+id/response_txt"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="Response"
-        android:textSize="18sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/send_btn"/>
+        app:layout_constraintBottom_toTopOf="@+id/connect_btn"/>
 
     <Button
         android:id="@+id/receive_btn"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Get Mesa from Basem"
-        android:layout_marginTop="10dp"
+        android:text="Start Receiving"
+        android:layout_margin="10dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/response_txt" />
+        app:layout_constraintStart_toEndOf="@+id/send_btn"
+        app:layout_constraintBottom_toTopOf="@+id/connect_btn" />
 
     <Button
         android:id="@+id/connect_btn"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Connect"
-        android:layout_marginTop="10dp"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_margin="10dp"
+        app:layout_constraintEnd_toStartOf="@+id/disconnect_btn"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/receive_btn" />
+        app:layout_constraintBottom_toBottomOf="parent" />
 
     <Button
         android:id="@+id/disconnect_btn"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Disconnect"
-        android:layout_marginTop="10dp"
+        android:layout_margin="10dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/connect_btn" />
+        app:layout_constraintStart_toEndOf="@+id/connect_btn"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 
 
