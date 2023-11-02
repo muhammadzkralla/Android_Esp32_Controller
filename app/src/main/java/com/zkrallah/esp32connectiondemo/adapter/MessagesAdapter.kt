@@ -30,6 +30,6 @@ class MessagesAdapter(private val list: MutableList<Message>) : RecyclerView.Ada
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val messageTxt = itemView.findViewById<TextView>(R.id.txt_message)
+        val messageTxt: TextView = itemView.findViewById(R.id.txt_message)
     }
 }

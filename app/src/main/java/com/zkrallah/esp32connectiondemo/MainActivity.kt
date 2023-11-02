@@ -2,7 +2,7 @@ package com.zkrallah.esp32connectiondemo
 
 import android.content.Context
 import android.net.ConnectivityManager
-import android.net.NetworkInfo
+import android.net.NetworkCapabilities
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -27,10 +27,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private var socket: Socket? = null
     private val adapter = MessagesAdapter(mutableListOf())
-
-    companion object {
-        private var started = false
-    }
+    private var startedReceiving = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,109 +35,90 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.connectBtn.setOnClickListener {
-            if (isNetworkAvailable() && binding.edtIp.text.isNotEmpty()) {
-                lifecycleScope.launch(Dispatchers.IO) {
-                    try {
-                        val ip = binding.edtIp.text.toString()
-                        val port = binding.edtPort.text.toString().toInt()
-                        socket = Socket(ip, port)
-                        val outputStream = DataOutputStream(socket!!.getOutputStream())
-                        outputStream.writeUTF("Hello from Android!")
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(
-                                this@MainActivity,
-                                "Connected successfully",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                        Log.e("ConnectionErr", "onCreate: $e")
-                        withContext(Dispatchers.IO) {
-                            Toast.makeText(
-                                this@MainActivity,
-                                "Error connecting : $e",
-                                Toast.LENGTH_SHORT
-                            )
-                                .show()
-                        }
-                    }
-                }
-            } else {
-                Toast.makeText(this, "No network connection available", Toast.LENGTH_SHORT).show()
-            }
+            if (isNetworkAvailable() && binding.edtIp.text.isNotEmpty()) connectToEsp()
+            else showToast("No network connection available!")
         }
 
         binding.disconnectBtn.setOnClickListener {
             socket?.close()
-            started = false
+            startedReceiving = false
         }
 
         binding.sendBtn.setOnClickListener {
-
-            if (isNetworkAvailable() && socket != null && binding.edtMsg.text.isNotEmpty()) {
-                lifecycleScope.launch(Dispatchers.IO) {
-                    try {
-                        val outputStream = DataOutputStream(socket!!.getOutputStream())
-                        val message = binding.edtMsg.text.toString()
-                        outputStream.writeUTF(message)
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(
-                                this@MainActivity,
-                                "Message sent successfully",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                        Log.e("ConnectionErr", "onCreate: $e")
-                        withContext(Dispatchers.IO) {
-                            Toast.makeText(
-                                this@MainActivity,
-                                "Error sending message $e",
-                                Toast.LENGTH_SHORT
-                            )
-                                .show()
-                        }
-                    }
-                }
-            } else {
-                Toast.makeText(this, "No network connection available", Toast.LENGTH_SHORT).show()
-            }
+            if (isNetworkAvailable() && socket != null && binding.edtMsg.text.isNotEmpty()) sendMessage()
+            else showToast("No network connection available!")
         }
 
         binding.receiveBtn.setOnClickListener {
-            if (socket != null && !started) {
-                lifecycleScope.launch(Dispatchers.IO) {
-                    try {
-                        val inputStream =
-                            BufferedReader(InputStreamReader(socket!!.getInputStream()))
-                        while (socket!!.isConnected) {
-                            val receivedMessage = inputStream.readLine()
-                            withContext(Dispatchers.Main) {
-                                adapter.addMessage(Message(receivedMessage))
-                                binding.recyclerMessages.adapter = adapter
-                                binding.recyclerMessages.layoutManager =
-                                    LinearLayoutManager(
-                                        this@MainActivity,
-                                        LinearLayoutManager.VERTICAL,
-                                        true
-                                    )
+            if (socket != null && !startedReceiving) startReceiving()
+            else if (socket != null) showToast("Already Started Receiving Packets.")
+            else showToast("No network connection available!")
+        }
+    }
 
-                                started = true
-                            }
-                        }
+    private fun connectToEsp() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val ip = binding.edtIp.text.toString()
+                val port = binding.edtPort.text.toString().toInt()
+                socket = Socket(ip, port)
+                val outputStream = DataOutputStream(socket!!.getOutputStream())
+                outputStream.writeUTF("Hello from Android!")
+                withContext(Dispatchers.Main) {
+                    showToast("Connected successfully")
+                }
+            } catch (e: IOException) {
+                Log.e("ConnectionErr", "onCreate: $e")
+                withContext(Dispatchers.Main) {
+                    showToast("Error connecting : $e")
+                }
+            }
+        }
+    }
 
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(
+    private fun sendMessage() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val outputStream = DataOutputStream(socket!!.getOutputStream())
+                val message = binding.edtMsg.text.toString()
+                outputStream.writeUTF(message)
+                withContext(Dispatchers.Main) {
+                    showToast("Message sent successfully")
+                }
+            } catch (e: IOException) {
+                Log.e("ConnectionErr", "onCreate: $e")
+                withContext(Dispatchers.Main) {
+                    showToast("Error sending message $e")
+                }
+            }
+        }
+    }
+
+    private fun startReceiving() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val inputStream =
+                    BufferedReader(InputStreamReader(socket!!.getInputStream()))
+                while (socket!!.isConnected) {
+                    val receivedMessage = inputStream.readLine()
+                    withContext(Dispatchers.Main) {
+                        adapter.addMessage(Message(receivedMessage))
+                        binding.recyclerMessages.adapter = adapter
+                        binding.recyclerMessages.layoutManager =
+                            LinearLayoutManager(
                                 this@MainActivity,
-                                "Error receiving message: $e",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
+                                LinearLayoutManager.VERTICAL,
+                                true
+                            )
+
+                        startedReceiving = true
                     }
+                }
+
+            } catch (e: IOException) {
+                Log.e("ConnectionErr", "onCreate: $e")
+                withContext(Dispatchers.Main) {
+                    showToast("Error receiving message: $e")
                 }
             }
         }
@@ -148,14 +126,22 @@ class MainActivity : AppCompatActivity() {
 
     private fun isNetworkAvailable(): Boolean {
         val connectivityManager =
-            getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val activeNetworkInfo: NetworkInfo? = connectivityManager.activeNetworkInfo
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected
+            this.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+        val network = connectivityManager.activeNetwork ?: return false
+        val networkCapabilities = connectivityManager.getNetworkCapabilities(network)
+
+        return networkCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            ?: false
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        started = false
+        startedReceiving = false
         socket?.close()
     }
 
