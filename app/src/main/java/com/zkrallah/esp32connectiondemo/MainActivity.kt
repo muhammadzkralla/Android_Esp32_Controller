@@ -35,7 +35,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.connectBtn.setOnClickListener {
-            if (isNetworkAvailable() && binding.edtIp.text.isNotEmpty()) connectToEsp()
+            if (socket != null && !socket!!.isClosed) showToast("Already Connected !")
+            else if (isNetworkAvailable() && binding.edtIp.text.isNotEmpty()) connectToEsp()
             else showToast("No network connection available!")
         }
 
@@ -45,12 +46,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.sendBtn.setOnClickListener {
-            if (isNetworkAvailable() && socket != null && binding.edtMsg.text.isNotEmpty()) sendMessage()
+            if (socket != null && socket!!.isClosed) showToast("Socked is Closed !")
+            else if (isNetworkAvailable() && socket != null && binding.edtMsg.text.isNotEmpty()) sendMessage()
             else showToast("No network connection available!")
         }
 
         binding.receiveBtn.setOnClickListener {
-            if (socket != null && !startedReceiving) startReceiving()
+            if (socket != null && socket!!.isClosed) showToast("Socked is Closed !")
+            else if (socket != null && !startedReceiving) startReceiving()
             else if (socket != null) showToast("Already Started Receiving Packets.")
             else showToast("No network connection available!")
         }
@@ -64,8 +67,10 @@ class MainActivity : AppCompatActivity() {
                 socket = Socket(ip, port)
                 val outputStream = DataOutputStream(socket!!.getOutputStream())
                 outputStream.writeUTF("Hello from Android!")
-                withContext(Dispatchers.Main) {
-                    showToast("Connected successfully")
+                if (socket!!.isConnected && !socket!!.isClosed) {
+                    withContext(Dispatchers.Main) {
+                        showToast("Connected successfully")
+                    }
                 }
             } catch (e: IOException) {
                 Log.e("ConnectionErr", "onCreate: $e")
